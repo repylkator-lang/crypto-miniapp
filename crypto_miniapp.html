@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crypto Portfolio</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151b3d;
+            --bg-card: #1a2145;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-blue: #00d4ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8b93b8;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 50px, var(--accent-blue) 50px, var(--accent-blue) 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, var(--accent-blue) 50px, var(--accent-blue) 51px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 100%;
+            padding: 0 20px 100px 20px;
+        }
+
+        .header {
+            padding: 30px 0 20px 0;
+            text-align: center;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 42px;
+            letter-spacing: 3px;
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: fadeInDown 0.6s ease-out 0.1s both;
+        }
+
+        .portfolio-value {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 32px 24px;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .portfolio-value::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-3);
+        }
+
+        .portfolio-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .portfolio-amount {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 56px;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .portfolio-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .portfolio-change.positive {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+        }
+
+        .portfolio-change.negative {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-red);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin: 24px 0;
+            padding: 6px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .coins-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .coin-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .coin-card:nth-child(1) { animation-delay: 0.4s; }
+        .coin-card:nth-child(2) { animation-delay: 0.5s; }
+        .coin-card:nth-child(3) { animation-delay: 0.6s; }
+
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-3);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .coin-card:active {
+            transform: scale(0.98);
+        }
+
+        .coin-card.active::before {
+            opacity: 1;
+        }
+
+        .coin-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .coin-icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .coin-info {
+            flex: 1;
+        }
+
+        .coin-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .coin-symbol {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .coin-stats {
+            text-align: right;
+        }
+
+        .coin-price {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .coin-change {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+        }
+
+        .coin-change.positive { color: var(--accent-green); }
+        .coin-change.negative { color: var(--accent-red); }
+
+        .portfolio-section {
+            display: none;
+        }
+
+        .portfolio-section.active {
+            display: block;
+        }
+
+        .portfolio-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .portfolio-empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .portfolio-empty-text {
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-3);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: flex-end;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 100%;
+            border-radius: 24px 24px 0 0;
+            padding: 32px 24px;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            transition: border-color 0.3s;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-secondary);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo">CRYPTO TRACKER</div>
+            <div class="subtitle">Portfolio Manager</div>
+        </div>
+
+        <div class="portfolio-value">
+            <div class="portfolio-label">Total Value</div>
+            <div class="portfolio-amount" id="totalValue">$0.00</div>
+            <div class="portfolio-change positive" id="totalChange">
+                <span>↑</span>
+                <span>+0.00%</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="prices">Prices</button>
+            <button class="tab" data-tab="portfolio">Portfolio</button>
+        </div>
+
+        <div id="pricesSection" class="portfolio-section active">
+            <div class="loading" id="loadingPrices">
+                <div class="spinner"></div>
+                <div>Loading prices...</div>
+            </div>
+            <div class="coins-list" id="coinsList"></div>
+        </div>
+
+        <div id="portfolioSection" class="portfolio-section">
+            <div class="portfolio-empty" id="emptyPortfolio">
+                <div class="portfolio-empty-icon">💼</div>
+                <div class="portfolio-empty-text">Your portfolio is empty</div>
+                <button class="btn btn-primary" onclick="showAddModal()">Add Coins</button>
+            </div>
+            <div class="coins-list" id="portfolioList"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add to Portfolio</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Select Coin</label>
+                <select class="input" id="coinSelect">
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="SUI">Sui (SUI)</option>
+                    <option value="LINK">Chainlink (LINK)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Amount</label>
+                <input type="number" class="input" id="amountInput" placeholder="0.00" step="0.0001">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="addToPortfolio()">Add to Portfolio</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const COINS = {
+            'BTC': { symbol: 'BTCUSDT', name: 'Bitcoin', icon: '₿' },
+            'SUI': { symbol: 'SUIUSDT', name: 'Sui', icon: '🔷' },
+            'LINK': { symbol: 'LINKUSDT', name: 'Chainlink', icon: '🔗' }
+        };
+
+        let prices = {};
+        let portfolio = JSON.parse(localStorage.getItem('portfolio') || '{}');
+
+        async function fetchPrices() {
+            const symbols = Object.values(COINS).map(c => c.symbol);
+            const promises = symbols.map(symbol => 
+                fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`)
+                    .then(r => r.json())
+            );
+
+            const results = await Promise.all(promises);
+            
+            Object.keys(COINS).forEach((coin, i) => {
+                prices[coin] = {
+                    price: parseFloat(results[i].lastPrice),
+                    change: parseFloat(results[i].priceChangePercent)
+                };
+            });
+
+            renderPrices();
+            updatePortfolio();
+        }
+
+        function renderPrices() {
+            const container = document.getElementById('coinsList');
+            document.getElementById('loadingPrices').style.display = 'none';
+            
+            container.innerHTML = Object.keys(COINS).map(coin => {
+                const data = prices[coin];
+                const info = COINS[coin];
+                const changeClass = data.change >= 0 ? 'positive' : 'negative';
+                const changeSymbol = data.change >= 0 ? '↑' : '↓';
+                
+                return `
+                    <div class="coin-card" onclick="showCoinModal('${coin}')">
+                        <div class="coin-icon" style="background: ${getCoinGradient(coin)}">
+                            ${info.icon}
+                        </div>
+                        <div class="coin-info">
+                            <div class="coin-name">${info.name}</div>
+                            <div class="coin-symbol">${coin}</div>
+                        </div>
+                        <div class="coin-stats">
+                            <div class="coin-price">$${formatPrice(data.price)}</div>
+                            <div class="coin-change ${changeClass}">
+                                <span>${changeSymbol}</span>
+                                <span>${Math.abs(data.change).toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updatePortfolio() {
+            let totalValue = 0;
+            const container = document.getElementById('portfolioList');
+            const empty = document.getElementById('emptyPortfolio');
+            
+            const portfolioCoins = Object.keys(portfolio).filter(coin => portfolio[coin] > 0);
+            
+            if (portfolioCoins.length === 0) {
+                empty.style.display = 'block';
+                container.innerHTML = '';
+            } else {
+                empty.style.display = 'none';
+                container.innerHTML = portfolioCoins.map(coin => {
+                    const amount = portfolio[coin];
+                    const data = prices[coin];
+                    const info = COINS[coin];
+                    const value = amount * data.price;
+                    totalValue += value;
+                    
+                    const changeClass = data.change >= 0 ? 'positive' : 'negative';
+                    const changeSymbol = data.change >= 0 ? '↑' : '↓';
+                    
+                    return `
+                        <div class="coin-card active">
+                            <div class="coin-icon" style="background: ${getCoinGradient(coin)}">
+                                ${info.icon}
+                            </div>
+                            <div class="coin-info">
+                                <div class="coin-name">${amount.toFixed(4)} ${coin}</div>
+                                <div class="coin-symbol">$${formatPrice(data.price)}</div>
+                            </div>
+                            <div class="coin-stats">
+                                <div class="coin-price">$${value.toFixed(2)}</div>
+                                <div class="coin-change ${changeClass}">
+                                    <span>${changeSymbol}</span>
+                                    <span>${Math.abs(data.change).toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
+        }
+
+        function formatPrice(price) {
+            if (price < 1) return price.toFixed(4);
+            if (price < 100) return price.toFixed(2);
+            return price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function getCoinGradient(coin) {
+            const gradients = {
+                'BTC': 'linear-gradient(135deg, #f7931a 0%, #ffa500 100%)',
+                'SUI': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'LINK': 'linear-gradient(135deg, #2a5ada 0%, #1e40af 100%)'
+            };
+            return gradients[coin] || 'var(--gradient-1)';
+        }
+
+        function showCoinModal(coin) {
+            document.getElementById('coinSelect').value = coin;
+            showAddModal();
+        }
+
+        function showAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        function addToPortfolio() {
+            const coin = document.getElementById('coinSelect').value;
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            
+            if (!amount || amount <= 0) {
+                tg.showAlert('Please enter a valid amount');
+                return;
+            }
+            
+            portfolio[coin] = (portfolio[coin] || 0) + amount;
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            
+            updatePortfolio();
+            closeModal();
+            document.getElementById('amountInput').value = '';
+            
+            tg.showPopup({
+                title: 'Success!',
+                message: `Added ${amount} ${coin} to your portfolio`,
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.portfolio-section').forEach(s => s.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const section = tab.dataset.tab === 'prices' ? 'pricesSection' : 'portfolioSection';
+                document.getElementById(section).classList.add('active');
+            });
+        });
+
+        // Initialize
+        fetchPrices();
+        setInterval(fetchPrices, 30000); // Update every 30s
+    </script>
+</body>
+</html>
